@@ -1,11 +1,4 @@
 -- ======================================================
--- DATABASE: manajemen_sekolah
--- ======================================================
-
-CREATE DATABASE IF NOT EXISTS manajemen_sekolah;
-USE manajemen_sekolah;
-
--- ======================================================
 -- 1. TABEL users (untuk autentikasi & hak akses)
 -- ======================================================
 CREATE TABLE users (
