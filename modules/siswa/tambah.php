@@ -1,7 +1,7 @@
 <?php
 
 require_once '../../config/database.php';
-require_once '../../includes/auth.php';
+// require_once '../../includes/auth.php';
 
 $error   = [];
 $success = '';
@@ -83,146 +83,172 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <?php
-
 include_once '../../includes/header.php';
 include_once '../../includes/sidebar.php';
 ?>
 
-<!--
-     KONTEN: FORM TAMBAH SISWA
-     -->
-<div class="content-wrapper">
+<div class="container-fluid">
 
-    <div class="page-header">
-        <h2 class="page-title">Tambah Siswa Baru</h2>
+    <!-- TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Tambah Siswa Baru</h2>
+
         <a href="index.php?id_ta=<?= $default_ta ?>&id_kelas=<?= $default_kelas ?>"
-           class="btn btn-back">← Kembali</a>
+           class="btn btn-outline-secondary btn-sm">
+            ← Kembali
+        </a>
     </div>
 
+    <!-- ERROR -->
     <?php if (!empty($error)): ?>
-    <div class="alert alert-danger">
-        <ul style="margin:0; padding-left:18px;">
-            <?php foreach ($error as $e): ?>
-            <li><?= $e ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
+        <div class="alert alert-danger rounded-4 shadow-sm">
+            <ul class="mb-0 ps-3">
+                <?php foreach($error as $e): ?>
+                    <li><?= $e ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
     <?php endif; ?>
 
-    <div class="form-card">
-        <form method="POST" action="tambah.php?id_ta=<?= $default_ta ?>&id_kelas=<?= $default_kelas ?>">
+    <!-- FORM -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
 
-            <!-- SECTION: Data Pribadi -->
-            <div class="form-section">
-                <h3 class="form-section-title">Data Pribadi</h3>
-                <div class="form-grid">
+            <form method="POST"
+                  action="tambah.php?id_ta=<?= $default_ta ?>&id_kelas=<?= $default_kelas ?>">
 
-                    <div class="form-group">
-                        <label for="nisn">NISN <span class="required">*</span></label>
-                        <input type="text" id="nisn" name="nisn"
-                               value="<?= htmlspecialchars($_POST['nisn'] ?? '') ?>"
-                               placeholder="Contoh: 1234567890"
-                               maxlength="20" class="form-control">
-                        <small class="form-hint">Nomor Induk Siswa Nasional (angka, 8–20 digit)</small>
+                <!-- DATA PRIBADI -->
+                <h5 class="fw-bold mb-3 text-success">Data Pribadi</h5>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-6">
+                        <label class="form-label">NISN *</label>
+                        <input type="text"
+                               name="nisn"
+                               maxlength="20"
+                               class="form-control"
+                               value="<?= htmlspecialchars($_POST['nisn'] ?? '') ?>">
+                        <small class="text-muted">8–20 digit angka</small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="nama_lengkap">Nama Lengkap <span class="required">*</span></label>
-                        <input type="text" id="nama_lengkap" name="nama_lengkap"
-                               value="<?= htmlspecialchars($_POST['nama_lengkap'] ?? '') ?>"
-                               placeholder="Nama sesuai akta lahir"
-                               maxlength="100" class="form-control">
+                    <div class="col-md-6">
+                        <label class="form-label">Nama Lengkap *</label>
+                        <input type="text"
+                               name="nama_lengkap"
+                               class="form-control"
+                               value="<?= htmlspecialchars($_POST['nama_lengkap'] ?? '') ?>">
                     </div>
 
-                    <div class="form-group">
-                        <label for="tempat_lahir">Tempat Lahir</label>
-                        <input type="text" id="tempat_lahir" name="tempat_lahir"
-                               value="<?= htmlspecialchars($_POST['tempat_lahir'] ?? '') ?>"
-                               placeholder="Kota/Kabupaten"
-                               maxlength="50" class="form-control">
+                    <div class="col-md-6">
+                        <label class="form-label">Tempat Lahir</label>
+                        <input type="text"
+                               name="tempat_lahir"
+                               class="form-control"
+                               value="<?= htmlspecialchars($_POST['tempat_lahir'] ?? '') ?>">
                     </div>
 
-                    <div class="form-group">
-                        <label for="tgl_lahir">Tanggal Lahir <span class="required">*</span></label>
-                        <input type="date" id="tgl_lahir" name="tgl_lahir"
-                               value="<?= htmlspecialchars($_POST['tgl_lahir'] ?? '') ?>"
-                               class="form-control">
+                    <div class="col-md-6">
+                        <label class="form-label">Tanggal Lahir *</label>
+                        <input type="date"
+                               name="tgl_lahir"
+                               class="form-control"
+                               value="<?= htmlspecialchars($_POST['tgl_lahir'] ?? '') ?>">
                     </div>
 
-                    <div class="form-group">
-                        <label for="jenis_kelamin">Jenis Kelamin <span class="required">*</span></label>
-                        <select id="jenis_kelamin" name="jenis_kelamin" class="form-control">
-                            <option value="">-- Pilih --</option>
-                            <option value="Laki-laki"  <?= (($_POST['jenis_kelamin'] ?? '') === 'Laki-laki')  ? 'selected' : '' ?>>Laki-laki</option>
-                            <option value="Perempuan"  <?= (($_POST['jenis_kelamin'] ?? '') === 'Perempuan')  ? 'selected' : '' ?>>Perempuan</option>
+                    <div class="col-md-6">
+                        <label class="form-label">Jenis Kelamin *</label>
+                        <select name="jenis_kelamin" class="form-select">
+                            <option value="">Pilih</option>
+
+                            <option value="Laki-laki"
+                                <?= (($_POST['jenis_kelamin'] ?? '')=='Laki-laki') ? 'selected':'' ?>>
+                                Laki-laki
+                            </option>
+
+                            <option value="Perempuan"
+                                <?= (($_POST['jenis_kelamin'] ?? '')=='Perempuan') ? 'selected':'' ?>>
+                                Perempuan
+                            </option>
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="asal_sekolah">Asal Sekolah</label>
-                        <input type="text" id="asal_sekolah" name="asal_sekolah"
-                               value="<?= htmlspecialchars($_POST['asal_sekolah'] ?? '') ?>"
-                               placeholder="Nama SD/MI asal"
-                               maxlength="100" class="form-control">
+                    <div class="col-md-6">
+                        <label class="form-label">Asal Sekolah</label>
+                        <input type="text"
+                               name="asal_sekolah"
+                               class="form-control"
+                               value="<?= htmlspecialchars($_POST['asal_sekolah'] ?? '') ?>">
                     </div>
 
-                    <div class="form-group form-group-full">
-                        <label for="alamat">Alamat</label>
-                        <textarea id="alamat" name="alamat" rows="3"
-                                  placeholder="Alamat lengkap siswa"
+                    <div class="col-12">
+                        <label class="form-label">Alamat</label>
+                        <textarea name="alamat"
+                                  rows="3"
                                   class="form-control"><?= htmlspecialchars($_POST['alamat'] ?? '') ?></textarea>
                     </div>
 
                 </div>
-            </div>
 
-            <!-- SECTION: Penempatan Kelas -->
-            <div class="form-section">
-                <h3 class="form-section-title">Penempatan Kelas</h3>
-                <div class="form-grid">
+                <!-- PENEMPATAN -->
+                <h5 class="fw-bold mb-3 text-success">Penempatan Kelas</h5>
 
-                    <div class="form-group">
-                        <label for="id_ta">Tahun Ajaran <span class="required">*</span></label>
-                        <select id="id_ta" name="id_ta" class="form-control">
-                            <option value="0">-- Pilih Tahun Ajaran --</option>
-                            <?php foreach ($list_ta as $ta): ?>
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Tahun Ajaran *</label>
+                        <select name="id_ta" class="form-select">
+                            <option value="0">Pilih Tahun Ajaran</option>
+
+                            <?php foreach($list_ta as $ta): ?>
                             <option value="<?= $ta['id_ta'] ?>"
-                                <?= ($ta['id_ta'] == $default_ta) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($ta['tahun']) ?> (<?= $ta['semester'] ?>)
-                                <?= $ta['status_aktif'] ? ' — Aktif' : '' ?>
+                                <?= ($ta['id_ta']==$default_ta)?'selected':'' ?>>
+
+                                <?= $ta['tahun'] ?> (<?= $ta['semester'] ?>)
+                                <?= $ta['status_aktif'] ? ' - Aktif' : '' ?>
+
                             </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="id_kelas">Kelas <span class="required">*</span></label>
-                        <select id="id_kelas" name="id_kelas" class="form-control">
-                            <option value="0">-- Pilih Kelas --</option>
-                            <?php foreach ($list_kelas as $kl): ?>
+                    <div class="col-md-6">
+                        <label class="form-label">Kelas *</label>
+                        <select name="id_kelas" class="form-select">
+                            <option value="0">Pilih Kelas</option>
+
+                            <?php foreach($list_kelas as $kl): ?>
                             <option value="<?= $kl['id_kelas'] ?>"
-                                <?= ($kl['id_kelas'] == $default_kelas) ? 'selected' : '' ?>>
-                                Kelas <?= htmlspecialchars($kl['nama_kelas']) ?>
+                                <?= ($kl['id_kelas']==$default_kelas)?'selected':'' ?>>
+
+                                <?= $kl['nama_kelas'] ?>
+
                             </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                 </div>
-            </div>
 
-            <!-- Tombol Submit -->
-            <div class="form-actions">
-                <a href="index.php?id_ta=<?= $default_ta ?>&id_kelas=<?= $default_kelas ?>"
-                   class="btn btn-cancel">Batal</a>
-                <button type="submit" class="btn btn-simpan">💾 Simpan Data Siswa</button>
-            </div>
+                <!-- BUTTON -->
+                <div class="mt-4 d-flex justify-content-end gap-2">
 
-        </form>
+                    <a href="index.php?id_ta=<?= $default_ta ?>&id_kelas=<?= $default_kelas ?>"
+                       class="btn btn-light border px-4">
+                        Batal
+                    </a>
+
+                    <button type="submit" class="btn btn-success px-4">
+                        Simpan Data
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
     </div>
 
 </div>
 
-<?php
-include_once '../../includes/footer.php';
-?>
+<?php include_once '../../includes/footer.php'; ?>

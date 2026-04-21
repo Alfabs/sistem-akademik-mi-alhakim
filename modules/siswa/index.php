@@ -133,141 +133,142 @@ include_once '../../includes/sidebar.php';
 <!-- 
      KONTEN UTAMA: DATA SISWA
       -->
-<div class="content-wrapper">
+<div class="container-fluid">
 
-    <!-- Page Title -->
-    <div class="page-header">
-        <h2 class="page-title">Data Siswa</h2>
+    <!-- TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Data Siswa</h4>
+        <a href="<?= BASE_URL ?>modules/siswa/tambah.php"
+           class="btn btn-primary">
+            + Tambah Siswa
+        </a>
     </div>
 
-    <!-- Alert / Notifikasi -->
+    <!-- ALERT -->
     <?php if ($pesan): ?>
-    <div class="alert alert-<?= htmlspecialchars($tipe_pesan) ?> alert-dismissible">
-        <span><?= $pesan ?></span>
-        <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
-    </div>
+        <div class="alert alert-<?= $tipe_pesan ?> alert-dismissible fade show">
+            <?= $pesan ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     <?php endif; ?>
 
-    <!-- Filter Form -->
-    <div class="filter-card">
-        <form method="GET" action="index.php" class="filter-form">
-            <div class="filter-group">
-                <label class="filter-label">Tahun Ajaran</label>
-                <select name="id_ta" class="filter-select">
-                    <option value="0">-- Semua --</option>
-                    <?php foreach ($list_ta as $ta): ?>
-                    <option value="<?= $ta['id_ta'] ?>"
-                        <?= ($ta['id_ta'] == $filter_ta) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($ta['tahun']) ?> (<?= $ta['semester'] ?>)
-                        <?= $ta['status_aktif'] ? ' ✓' : '' ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+    <!-- FILTER -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
 
-            <div class="filter-group">
-                <label class="filter-label">Kelas</label>
-                <select name="id_kelas" class="filter-select">
-                    <option value="0">-- Semua Kelas --</option>
-                    <?php foreach ($list_kelas as $kl): ?>
-                    <option value="<?= $kl['id_kelas'] ?>"
-                        <?= ($kl['id_kelas'] == $filter_kelas) ? 'selected' : '' ?>>
-                        Kelas <?= htmlspecialchars($kl['nama_kelas']) ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tahun Ajaran</label>
+                    <select name="id_ta" class="form-select">
+                        <option value="0">Semua</option>
+                        <?php foreach ($list_ta as $ta): ?>
+                            <option value="<?= $ta['id_ta'] ?>" <?= $ta['id_ta']==$filter_ta?'selected':'' ?>>
+                                <?= $ta['tahun'] ?> (<?= $ta['semester'] ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-            <button type="submit" class="btn btn-search">Cari</button>
-        </form>
+                <div class="col-md-4">
+                    <label class="form-label">Kelas</label>
+                    <select name="id_kelas" class="form-select">
+                        <option value="0">Semua</option>
+                        <?php foreach ($list_kelas as $kl): ?>
+                            <option value="<?= $kl['id_kelas'] ?>" <?= $kl['id_kelas']==$filter_kelas?'selected':'' ?>>
+                                <?= $kl['nama_kelas'] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-success w-100">Filter</button>
+                </div>
+
+            </form>
+        </div>
     </div>
 
-    <!-- Tabel Siswa -->
-    <div class="table-card">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th width="40">No</th>
-                    <th>NISN</th>
-                    <th>Nama Siswa</th>
-                    <th>Jenis Kelamin</th>
-                    <th>Tgl Lahir</th>
-                    <th>Alamat</th>
-                    <th width="160">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($data_siswa)): ?>
-                <tr>
-                    <td colspan="7" class="empty-state">
-                        Tidak ada data siswa ditemukan.
-                    </td>
-                </tr>
-                <?php else: ?>
-                <?php foreach ($data_siswa as $i => $s): ?>
-                <tr>
-                    <td class="text-center"><?= $i + 1 ?></td>
-                    <td><?= htmlspecialchars($s['nisn']) ?></td>
-                    <td><?= htmlspecialchars($s['nama_lengkap']) ?></td>
-                    <td><?= htmlspecialchars($s['jenis_kelamin']) ?></td>
-                    <td>
-                        <?php
-                        if ($s['tgl_lahir']) {
-                            $d = new DateTime($s['tgl_lahir']);
-                            echo $d->format('d/m/Y');
-                        } else {
-                            echo '-';
-                        }
-                        ?>
-                    </td>
-                    <td class="alamat-cell"><?= htmlspecialchars($s['alamat'] ?? '-') ?></td>
-                    <td class="aksi-cell">
-                        <a href="lihat.php?nisn=<?= urlencode($s['nisn']) ?>&id_ta=<?= $filter_ta ?>"
-                           class="btn-aksi btn-lihat">Lihat</a>
-                        <a href="edit.php?nisn=<?= urlencode($s['nisn']) ?>&id_ta=<?= $filter_ta ?>"
-                           class="btn-aksi btn-edit">Edit</a>
-                        <a href="index.php?hapus=<?= urlencode($s['nisn']) ?>&id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-                           class="btn-aksi btn-hapus"
-                           onclick="return confirm('Yakin ingin menghapus siswa <?= htmlspecialchars(addslashes($s['nama_lengkap'])) ?>?\nSemua data absensi dan nilai terkait juga akan terhapus!')">Hapus</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <!-- TABLE -->
+    <div class="card">
+        <div class="card-body table-responsive">
+
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>No</th>
+                        <th>NISN</th>
+                        <th>Nama</th>
+                        <th>JK</th>
+                        <th>Tgl Lahir</th>
+                        <th>Alamat</th>
+                        <th width="180">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(empty($data_siswa)): ?>
+                        <tr>
+                            <td colspan="7" class="text-center">Tidak ada data</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach($data_siswa as $i => $s): ?>
+                        <tr>
+                            <td><?= $i+1 ?></td>
+                            <td><?= $s['nisn'] ?></td>
+                            <td><?= $s['nama_lengkap'] ?></td>
+                            <td><?= $s['jenis_kelamin'] ?></td>
+                            <td>
+                                <?= $s['tgl_lahir'] ? date('d/m/Y', strtotime($s['tgl_lahir'])) : '-' ?>
+                            </td>
+                            <td><?= $s['alamat'] ?></td>
+                            <td>
+                                <a style="color: white;" href="detail.php?nisn=<?= $s['nisn'] ?>"
+                                    class="btn btn-success btn-sm py-0 px-2">
+                                    Lihat
+                                </a>
+
+                                <a style="color: white;" href="edit.php?nisn=<?= $s['nisn'] ?>&id_ta=<?= $filter_ta ?>"
+                                   class="btn btn-warning btn-sm py-0 px-2">Edit</a>
+
+                                <a href="index.php?hapus=<?= $s['nisn'] ?>&id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
+                                   class="btn btn-danger btn-sm py-0 px-2"
+                                   onclick="return confirm('Yakin hapus?')">
+                                   Hapus
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+        </div>
     </div>
 
-    <!-- Action Bar Bawah -->
-    <div class="bottom-actions">
-        <div class="bottom-left">
+    <!-- ACTION -->
+    <div class="d-flex justify-content-between mt-3">
+
+        <div>
             <a href="cetak_pdf.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-               target="_blank" class="btn btn-pdf">
+               class="btn btn-secondary btn-sm" target="_blank">
                 Cetak PDF
             </a>
-            <a href="import_excel.php" class="btn btn-import">
+
+            <a href="export_excel.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
+               class="btn btn-success btn-sm">
+                Export Excel
+            </a>
+        </div>
+
+        <div>
+            <a href="import_excel.php" class="btn btn-primary btn-sm">
                 Import
             </a>
-            <a href="export_excel.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-               class="btn btn-export">
-                Export .xlsx
-            </a>
         </div>
-        <div class="bottom-right">
-            <a href="tambah.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-               class="btn btn-tambah">
-                Tambah Siswa
-            </a>
-        </div>
+
     </div>
 
-</div><!-- /.content-wrapper -->
-
-
-
-
-</div>
-</div>
 </div>
 
-</body>
-</html>
+<?php
+include_once '../../includes/footer.php';
