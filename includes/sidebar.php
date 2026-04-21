@@ -1,31 +1,57 @@
-<div class="bg-white border-end" id="sidebar-wrapper">
-    <div class="sidebar-heading text-center py-4 fs-5 fw-bold text-dark tracking-wide">
+<!-- sidebar.php -->
+<div id="sidebar-wrapper" class="bg-white border-end" style="width:260px; min-height:100vh;">
+    
+    <div class="sidebar-heading text-center py-4 fs-5 fw-bold border-bottom">
         MI AL-HAKIM
     </div>
-    
-    <div class="list-group list-group-flush px-3">
-        <a href="dashboard.php" class="list-group-item list-group-item-action menu-active d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">📊</span> Dashboard
+
+    <div class="list-group list-group-flush p-3">
+
+        <a href="../dashboard/index.php"
+           class="list-group-item list-group-item-action rounded mb-2">
+           📊 Dashboard
         </a>
-        
-        <a href="absensi.php" class="list-group-item list-group-item-action menu-item d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">👥</span> Absensi Siswa
+
+        <a href="../absensi/index.php"
+           class="list-group-item list-group-item-action rounded mb-2">
+           👥 Absensi Siswa
         </a>
-        <a href="nilai.php" class="list-group-item list-group-item-action menu-item d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">💯</span> Nilai Siswa
+
+        <a href="../nilai/index.php"
+           class="list-group-item list-group-item-action rounded mb-2">
+           💯 Nilai Siswa
         </a>
-        <a href="data_siswa.php" class="list-group-item list-group-item-action menu-item d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">🔍</span> Data Siswa
+
+        <a href="../siswa/index.php"
+           class="list-group-item list-group-item-action rounded mb-2 active">
+           🔍 Data Siswa
         </a>
-        <a href="input_siswa.php" class="list-group-item list-group-item-action menu-item d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">📥</span> Input Siswa Baru
+
+        <a href="../siswa/tambah.php"
+           class="list-group-item list-group-item-action rounded mb-2">
+           📥 Input Siswa Baru
         </a>
-        <a href="dokumen.php" class="list-group-item list-group-item-action menu-item d-flex align-items-center mb-2">
-            <span class="menu-icon me-3">📄</span> Dokumen Pembelajaran
+
+        <a href="../dokumen/index.php"
+           class="list-group-item list-group-item-action rounded mb-2">
+           📄 Dokumen
         </a>
-        
-        <a href="../auth/logout.php" class="list-group-item list-group-item-action menu-item text-danger d-flex align-items-center mt-4 border-top pt-3">
-            <span class="menu-icon me-3">🚪</span> Logout
+
+        <a href="../../auth/logout.php"
+           class="list-group-item list-group-item-action text-danger rounded mt-4">
+           🚪 Logout
         </a>
+
     </div>
 </div>
+
+<div id="page-content-wrapper">
+
+    <nav class="navbar navbar-light bg-white border-bottom px-4 py-3">
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <div style="width:35px;height:35px;border-radius:50%;background:#0d6efd;"></div>
+            <strong>Budi Setiawan</strong>
+        </div>
+    </nav>
+
+    <div class="main-content">
