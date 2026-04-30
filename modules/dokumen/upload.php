@@ -1,113 +1,159 @@
 <?php
 require_once '../../config/database.php';
 include '../../includes/header.php';
+include '../../includes/sidebar.php';
 
-$guru_query = mysqli_query($conn, "SELECT nip, nama_lengkap FROM guru");
-$mapel_query = mysqli_query($conn, "SELECT kode_mapel, nama_mapel FROM mapel");
+// Ambil data dropdown
+$guru_query = mysqli_query($conn, "SELECT nip, nama_lengkap FROM guru ORDER BY nama_lengkap");
+$mapel_query = mysqli_query($conn, "SELECT kode_mapel, nama_mapel FROM mapel ORDER BY nama_mapel");
 
+$error = [];
+$success = "";
+
+// PROSES UPLOAD
 if (isset($_POST['submit'])) {
-    $nip = $_POST['nip'];
-    $kode_mapel = $_POST['kode_mapel'];
-    $jenis_file = $_POST['jenis_file'];
-    
-    $nama_file_asli = $_FILES['berkas']['name'];
-    $tmp_file = $_FILES['berkas']['tmp_name'];
-    $ukuran_file = $_FILES['berkas']['size'];
-    $error = $_FILES['berkas']['error'];
 
-    $ekstensi_diizinkan = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
-    $ekstensi_file = strtolower(pathinfo($nama_file_asli, PATHINFO_EXTENSION));
+    $nip         = mysqli_real_escape_string($conn, $_POST['nip']);
+    $kode_mapel  = mysqli_real_escape_string($conn, $_POST['kode_mapel']);
+    $jenis_file  = mysqli_real_escape_string($conn, $_POST['jenis_file']);
 
-    if ($error === 0) {
-        if (in_array($ekstensi_file, $ekstensi_diizinkan)) {
-            if ($ukuran_file <= 25000000) { 
-                $nama_bersih = preg_replace("/[^a-zA-Z0-9.]/", "_", $nama_file_asli);
-                $nama_file_baru = time() . '_' . $nama_bersih;
-                $path_tujuan = '../../assets/uploads/dokumen/' . $nama_file_baru;
+    $file_name   = $_FILES['berkas']['name'];
+    $tmp_file    = $_FILES['berkas']['tmp_name'];
+    $file_size   = $_FILES['berkas']['size'];
+    $file_error  = $_FILES['berkas']['error'];
 
-                if (move_uploaded_file($tmp_file, $path_tujuan)) {
-                    $sql = "INSERT INTO dokumen (nip, kode_mapel, jenis_file, nama_file, path_file) 
-                            VALUES ('$nip', '$kode_mapel', '$jenis_file', '$nama_file_baru', '$path_tujuan')";
-                    
-                    if (mysqli_query($conn, $sql)) {
-                        echo "<script>alert('Dokumen berhasil diunggah!'); window.location.href='index.php';</script>";
-                    } else {
-                        echo "<script>alert('Gagal menyimpan ke database: " . mysqli_error($conn) . "');</script>";
-                    }
-                } else {
-                    echo "<script>alert('Gagal memindahkan file. Pastikan folder assets/uploads/dokumen/ sudah ada!');</script>";
-                }
+    // Validasi
+    if (empty($nip)) $error[] = "Guru harus dipilih";
+    if (empty($kode_mapel)) $error[] = "Mapel harus dipilih";
+
+    $allowed_ext = ['pdf','doc','docx','xls','xlsx','ppt','pptx'];
+    $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+    if ($file_error !== 0) {
+        $error[] = "Terjadi kesalahan saat upload file";
+    }
+
+    if (!in_array($ext, $allowed_ext)) {
+        $error[] = "Format file tidak didukung";
+    }
+
+    if ($file_size > 50000000) {
+        $error[] = "Ukuran file maksimal 25MB";
+    }
+
+    // Jika tidak ada error
+    if (empty($error)) {
+
+        $nama_baru = time() . "_" . preg_replace("/[^a-zA-Z0-9.]/", "_", $file_name);
+        $path = "../../assets/dokumen/" . $nama_baru;
+
+        if (move_uploaded_file($tmp_file, $path)) {
+
+            $sql = "INSERT INTO dokumen (nip, kode_mapel, jenis_file, nama_file, path_file)
+                    VALUES ('$nip','$kode_mapel','$jenis_file','$nama_baru','$path')";
+
+            if (mysqli_query($conn, $sql)) {
+                $success = "Dokumen berhasil diupload";
             } else {
-                echo "<script>alert('Ukuran file terlalu besar! Maksimal 25MB.');</script>";
+                $error[] = "Gagal simpan database";
             }
+
         } else {
-            echo "<script>alert('Ekstensi file tidak valid! Harap unggah PDF, Word, Excel, atau PPT.');</script>";
+            $error[] = "Gagal upload file ke server";
         }
-    } else {
-        echo "<script>alert('Terjadi kesalahan saat mengunggah file. (Error Code: $error)');</script>";
     }
 }
 ?>
 
-<div id="page-content-wrapper">
-    <div class="main-content">
-        
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm mt-4">
-                    <div class="card-header bg-white border-0 pt-4 pb-0">
-                        <h4 class="fw-bold m-0">Unggah Dokumen Baru</h4>
-                    </div>
-                    <div class="card-body p-4">
-                        
-                        <form action="upload.php" method="POST" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Pengunggah (Guru)</label>
-                                <select name="nip" class="form-select" required>
-                                    <option value="">-- Pilih Guru --</option>
-                                    <?php while ($g = mysqli_fetch_assoc($guru_query)) { ?>
-                                        <option value="<?= $g['nip'] ?>"><?= $g['nama_lengkap'] ?></option>
-                                    <?php } ?>
-                                </select>
-                            </div>
+<div class="container-fluid">
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Mata Pelajaran</label>
-                                <select name="kode_mapel" class="form-select" required>
-                                    <option value="">-- Pilih Mata Pelajaran --</option>
-                                    <?php while ($m = mysqli_fetch_assoc($mapel_query)) { ?>
-                                        <option value="<?= $m['kode_mapel'] ?>"><?= $m['nama_mapel'] ?></option>
-                                    <?php } ?>
-                                </select>
-                            </div>
+    <!-- TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Upload Dokumen</h4>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Jenis Dokumen</label>
-                                <select name="jenis_file" class="form-select" required>
-                                    <option value="RPP">RPP</option>
-                                    <option value="Silabus">Silabus</option>
-                                    <option value="Modul">Modul Ajar</option>
-                                    <option value="ATP">ATP</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">Pilih File (Maks 25MB)</label>
-                                <input type="file" name="berkas" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" required>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="submit" name="submit" class="btn btn-success"><i class='bi bi-cloud-arrow-up'></i> Simpan Dokumen</button>
-                                <a href="index.php" class="btn btn-light">Batal / Kembali</a>
-                            </div>
-                        </form>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <a href="index.php" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+        </a>
     </div>
+
+    <!-- ALERT -->
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-danger">
+            <ul class="mb-0 ps-3">
+                <?php foreach($error as $e): ?>
+                    <li><?= $e ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($success): ?>
+        <div class="alert alert-success">
+            <?= $success ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- FORM -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <form method="POST" enctype="multipart/form-data">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Guru</label>
+                        <select name="nip" class="form-select" required>
+                            <option value="">Pilih Guru</option>
+                            <?php while ($g = mysqli_fetch_assoc($guru_query)): ?>
+                                <option value="<?= $g['nip'] ?>"><?= $g['nama_lengkap'] ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Mata Pelajaran</label>
+                        <select name="kode_mapel" class="form-select" required>
+                            <option value="">Pilih Mapel</option>
+                            <?php while ($m = mysqli_fetch_assoc($mapel_query)): ?>
+                                <option value="<?= $m['kode_mapel'] ?>"><?= $m['nama_mapel'] ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Jenis Dokumen</label>
+                        <select name="jenis_file" class="form-select">
+                            <option value="RPP">RPP</option>
+                            <option value="Silabus">Silabus</option>
+                            <option value="Modul">Modul</option>
+                            <option value="ATP">ATP</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">File</label>
+                        <input type="file" name="berkas" class="form-control" required>
+                        <small class="text-muted">Max 25MB (pdf, word, excel, ppt)</small>
+                    </div>
+
+                </div>
+
+                <div class="mt-4 d-flex justify-content-end gap-2">
+                    <a href="index.php" class="btn btn-light border px-4">
+                        Batal
+                    </a>
+
+                    <button type="submit" name="submit" class="btn btn-success px-4">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
 </div>
 
 <?php include '../../includes/footer.php'; ?>

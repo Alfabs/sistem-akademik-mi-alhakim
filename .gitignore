@@ -1,2 +1,17 @@
 assets/uploads/dokumen/*
 !assets/uploads/dokumen/.gitkeep
+
+# Composer dependencies
+vendor/
+
+# Cache Dompdf
+vendor/dompdf/lib/fonts/*.php
+vendor/dompdf/lib/fonts/*.ufm
+
+# Temporary files
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

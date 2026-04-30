@@ -1,50 +1,44 @@
 <?php
 include "../../config/database.php";
-include "../../includes/auth.php";
-require_role(['Guru', 'Operator']);
 
-// Pastikan form dikirim dengan method POST
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Ambil data dari form
-    $kode_mapel   = $_POST['kode_mapel'];
-    $jenis_nilai  = $_POST['jenis_nilai'];
-    $nip          = $_POST['nip'];
-    $id_riwayat_array = $_POST['id_riwayat']; // array berisi id_riwayat tiap siswa
-    $nilai_array      = $_POST['nilai'];      // array berisi nilai tiap siswa
+// Ambil data dari form
+$id_riwayat = $_POST['id_riwayat'];
+$nilai      = $_POST['nilai'];
+$kode_mapel = $_POST['kode_mapel'];
+$jenis      = $_POST['jenis_nilai'];
+$nip        = $_POST['nip'];
 
-    $sukses = 0;
-    $gagal  = 0;
+// Loop simpan data
+for ($i = 0; $i < count($id_riwayat); $i++) {
 
-    // Loop untuk setiap siswa
-    for ($i = 0; $i < count($id_riwayat_array); $i++) {
-        $id_riwayat = (int)$id_riwayat_array[$i];
-        $nilai = floatval($nilai_array[$i]);
+    $id = (int)$id_riwayat[$i];
+    $n  = (float)$nilai[$i];
 
-        // Cek apakah data nilai sudah ada untuk kombinasi (id_riwayat, kode_mapel, jenis_nilai)
-        $cek = mysqli_query($conn, "SELECT id_nilai FROM nilai WHERE id_riwayat = $id_riwayat AND kode_mapel = '$kode_mapel' AND jenis_nilai = '$jenis_nilai'");
-        
-        if (mysqli_num_rows($cek) > 0) {
-            // Jika sudah ada, lakukan UPDATE
-            $sql = "UPDATE nilai SET nilai_angka = $nilai, nip = '$nip', waktu_input = NOW() WHERE id_riwayat = $id_riwayat AND kode_mapel = '$kode_mapel' AND jenis_nilai = '$jenis_nilai'";
-        } else {
-            // Jika belum ada, lakukan INSERT
-            $sql = "INSERT INTO nilai (id_riwayat, kode_mapel, nip, jenis_nilai, nilai_angka) VALUES ($id_riwayat, '$kode_mapel', '$nip', '$jenis_nilai', $nilai)";
-        }
+    // Cek apakah sudah ada
+    $cek = mysqli_query($conn, "
+        SELECT id_nilai FROM nilai
+        WHERE id_riwayat=$id
+        AND kode_mapel='$kode_mapel'
+        AND jenis_nilai='$jenis'
+    ");
 
-        if (mysqli_query($conn, $sql)) {
-            $sukses++;
-        } else {
-            $gagal++;
-        }
+    if (mysqli_num_rows($cek) > 0) {
+        // UPDATE
+        mysqli_query($conn, "
+            UPDATE nilai SET nilai_angka=$n
+            WHERE id_riwayat=$id
+            AND kode_mapel='$kode_mapel'
+            AND jenis_nilai='$jenis'
+        ");
+    } else {
+        // INSERT
+        mysqli_query($conn, "
+            INSERT INTO nilai (id_riwayat, kode_mapel, nip, jenis_nilai, nilai_angka)
+            VALUES ($id, '$kode_mapel', '$nip', '$jenis', $n)
+        ");
     }
-
-    // Setelah selesai, kembali ke halaman index dengan pesan
-    $msg = "Berhasil menyimpan $sukses nilai, gagal $gagal.";
-    header("Location: index.php?msg=" . urlencode($msg));
-    exit;
-} else {
-    // Jika bukan method POST, redirect ke index
-    header("Location: index.php");
-    exit;
 }
-?>
+
+// Redirect balik
+header("Location: index.php?msg=Data berhasil disimpan");
+exit;

@@ -1,11 +1,14 @@
 <?php
-
 require_once '../../config/database.php';
-// require_once '../../includes/auth.php';
+require_once '../../includes/auth.php';
 
+// Semua role bisa melihat data siswa
+check_login();
+
+$role = $_SESSION['role'];
+$is_operator = ($role === 'Operator');
 
 // AMBIL DATA FILTER: Tahun Ajaran & Kelas
-
 $filter_ta   = isset($_GET['id_ta'])    ? (int)$_GET['id_ta']    : 0;
 $filter_kelas = isset($_GET['id_kelas']) ? (int)$_GET['id_kelas'] : 0;
 
@@ -30,13 +33,7 @@ while ($row = mysqli_fetch_assoc($result_kelas)) {
     $list_kelas[] = $row;
 }
 
-// 
 // QUERY DATA SISWA berdasarkan filter
-// 
-$where_parts = [];
-$params      = [];
-$types       = '';
-
 $sql = "
     SELECT
         s.nisn,
@@ -55,96 +52,58 @@ $sql = "
 ";
 
 if ($filter_ta > 0) {
-    $sql .= " AND rk.id_ta = ?";
-    $params[] = $filter_ta;
-    $types   .= 'i';
+    $sql .= " AND rk.id_ta = $filter_ta";
 }
 if ($filter_kelas > 0) {
-    $sql .= " AND rk.id_kelas = ?";
-    $params[] = $filter_kelas;
-    $types   .= 'i';
+    $sql .= " AND rk.id_kelas = $filter_kelas";
 }
 
 $sql .= " ORDER BY s.nama_lengkap ASC";
-
-$stmt = mysqli_prepare($conn, $sql);
-if (!empty($params)) {
-    mysqli_stmt_bind_param($stmt, $types, ...$params);
-}
-mysqli_stmt_execute($stmt);
-$result_siswa = mysqli_stmt_get_result($stmt);
+$result_siswa = mysqli_query($conn, $sql);
 
 $data_siswa = [];
 while ($row = mysqli_fetch_assoc($result_siswa)) {
     $data_siswa[] = $row;
 }
-$total_siswa = count($data_siswa);
 
-// 
-// HAPUS SISWA (jika ada aksi hapus)
-// 
+// HAPUS SISWA (Hanya Operator)
 $pesan = '';
 $tipe_pesan = '';
 if (isset($_GET['hapus']) && !empty($_GET['hapus'])) {
+    if (!$is_operator) {
+        header("Location: index.php?msg=Akses ditolak!&type=danger");
+        exit;
+    }
     $nisn_hapus = mysqli_real_escape_string($conn, $_GET['hapus']);
-    // Hapus dari tabel siswa (CASCADE akan hapus riwayat_kelas, absensi, nilai terkait)
     $del = mysqli_query($conn, "DELETE FROM siswa WHERE nisn='$nisn_hapus'");
     if ($del) {
-        $pesan = "Data siswa dengan NISN <strong>$nisn_hapus</strong> berhasil dihapus.";
+        $pesan = "Data siswa berhasil dihapus.";
         $tipe_pesan = 'success';
     } else {
         $pesan = "Gagal menghapus data siswa.";
         $tipe_pesan = 'danger';
     }
-    // Redirect untuk menghindari resubmit
     header("Location: index.php?id_ta=$filter_ta&id_kelas=$filter_kelas&msg=" . urlencode($pesan) . "&type=$tipe_pesan");
     exit;
 }
+
 if (isset($_GET['msg'])) {
     $pesan = $_GET['msg'];
     $tipe_pesan = $_GET['type'] ?? 'info';
 }
 
-// 
-// Ambil label tahun ajaran yang dipilih (untuk judul/export)
-
-$label_ta = '';
-foreach ($list_ta as $ta) {
-    if ($ta['id_ta'] == $filter_ta) {
-        $label_ta = $ta['tahun'] . ' - ' . $ta['semester'];
-        break;
-    }
-}
-$label_kelas = '';
-foreach ($list_kelas as $kl) {
-    if ($kl['id_kelas'] == $filter_kelas) {
-        $label_kelas = $kl['nama_kelas'];
-        break;
-    }
-}
-?>
-
-<?php
-
 include_once '../../includes/header.php';
 include_once '../../includes/sidebar.php';
 ?>
 
-<!-- 
-     KONTEN UTAMA: DATA SISWA
-      -->
 <div class="container-fluid">
-
-    <!-- TITLE -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">Data Siswa</h4>
-        <a href="<?= BASE_URL ?>modules/siswa/tambah.php"
-           class="btn btn-primary">
-            + Tambah Siswa
-        </a>
+        <?php if ($is_operator): ?>
+        <a href="tambah.php" class="btn btn-primary">+ Tambah Siswa</a>
+        <?php endif; ?>
     </div>
 
-    <!-- ALERT -->
     <?php if ($pesan): ?>
         <div class="alert alert-<?= $tipe_pesan ?> alert-dismissible fade show">
             <?= $pesan ?>
@@ -152,11 +111,9 @@ include_once '../../includes/sidebar.php';
         </div>
     <?php endif; ?>
 
-    <!-- FILTER -->
     <div class="card mb-3">
         <div class="card-body">
             <form method="GET" class="row g-3">
-
                 <div class="col-md-4">
                     <label class="form-label">Tahun Ajaran</label>
                     <select name="id_ta" class="form-select">
@@ -168,7 +125,6 @@ include_once '../../includes/sidebar.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Kelas</label>
                     <select name="id_kelas" class="form-select">
@@ -180,19 +136,15 @@ include_once '../../includes/sidebar.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-
                 <div class="col-md-4 d-flex align-items-end">
                     <button class="btn btn-success w-100">Filter</button>
                 </div>
-
             </form>
         </div>
     </div>
 
-    <!-- TABLE -->
     <div class="card">
         <div class="card-body table-responsive">
-
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                     <tr>
@@ -207,9 +159,7 @@ include_once '../../includes/sidebar.php';
                 </thead>
                 <tbody>
                     <?php if(empty($data_siswa)): ?>
-                        <tr>
-                            <td colspan="7" class="text-center">Tidak ada data</td>
-                        </tr>
+                        <tr><td colspan="7" class="text-center">Tidak ada data</td></tr>
                     <?php else: ?>
                         <?php foreach($data_siswa as $i => $s): ?>
                         <tr>
@@ -217,58 +167,34 @@ include_once '../../includes/sidebar.php';
                             <td><?= $s['nisn'] ?></td>
                             <td><?= $s['nama_lengkap'] ?></td>
                             <td><?= $s['jenis_kelamin'] ?></td>
-                            <td>
-                                <?= $s['tgl_lahir'] ? date('d/m/Y', strtotime($s['tgl_lahir'])) : '-' ?>
-                            </td>
+                            <td><?= $s['tgl_lahir'] ? date('d/m/Y', strtotime($s['tgl_lahir'])) : '-' ?></td>
                             <td><?= $s['alamat'] ?></td>
                             <td>
-                                <a style="color: white;" href="detail.php?nisn=<?= $s['nisn'] ?>"
-                                    class="btn btn-success btn-sm py-0 px-2">
-                                    Lihat
-                                </a>
-
-                                <a style="color: white;" href="edit.php?nisn=<?= $s['nisn'] ?>&id_ta=<?= $filter_ta ?>"
-                                   class="btn btn-warning btn-sm py-0 px-2">Edit</a>
-
-                                <a href="index.php?hapus=<?= $s['nisn'] ?>&id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-                                   class="btn btn-danger btn-sm py-0 px-2"
-                                   onclick="return confirm('Yakin hapus?')">
-                                   Hapus
-                                </a>
+                                <a href="detail.php?nisn=<?= $s['nisn'] ?>" class="btn btn-info btn-sm text-white">Lihat</a>
+                                <?php if ($is_operator): ?>
+                                <a href="edit.php?nisn=<?= $s['nisn'] ?>" class="btn btn-warning btn-sm text-white">Edit</a>
+                                <a href="index.php?hapus=<?= $s['nisn'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus?')">Hapus</a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
-
         </div>
     </div>
 
-    <!-- ACTION -->
     <div class="d-flex justify-content-between mt-3">
-
         <div>
-            <a href="cetak_pdf.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-               class="btn btn-secondary btn-sm" target="_blank">
-                Cetak PDF
-            </a>
-
-            <a href="export_excel.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>"
-               class="btn btn-success btn-sm">
-                Export Excel
-            </a>
+            <a href="cetak_pdf.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>" class="btn btn-secondary btn-sm" target="_blank">Cetak PDF</a>
+            <a href="export_excel.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>" class="btn btn-success btn-sm">Export Excel</a>
         </div>
-
+        <?php if ($is_operator): ?>
         <div>
-            <a href="import_excel.php" class="btn btn-primary btn-sm">
-                Import
-            </a>
+            <a href="import_excel.php" class="btn btn-primary btn-sm">Import</a>
         </div>
-
+        <?php endif; ?>
     </div>
-
 </div>
 
-<?php
-include_once '../../includes/footer.php';
+<?php include_once '../../includes/footer.php'; ?>
