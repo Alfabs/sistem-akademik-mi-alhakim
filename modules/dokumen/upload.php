@@ -1,16 +1,28 @@
 <?php
+session_start();
 require_once '../../config/database.php';
 include '../../includes/header.php';
 include '../../includes/sidebar.php';
 
-// Ambil data dropdown
-$guru_query = mysqli_query($conn, "SELECT nip, nama_lengkap FROM guru ORDER BY nama_lengkap");
+// Ambil data login
+$nip_login = $_SESSION['nip'] ?? null;
+
+// Ambil data guru berdasarkan login
+$guru_login = null;
+if ($nip_login) {
+    $q = mysqli_query($conn, "SELECT nip, nama_lengkap FROM guru WHERE nip='$nip_login'");
+    $guru_login = mysqli_fetch_assoc($q);
+}
+
+// Ambil data mapel
 $mapel_query = mysqli_query($conn, "SELECT kode_mapel, nama_mapel FROM mapel ORDER BY nama_mapel");
 
 $error = [];
 $success = "";
 
+// ==========================
 // PROSES UPLOAD
+// ==========================
 if (isset($_POST['submit'])) {
 
     $nip         = mysqli_real_escape_string($conn, $_POST['nip']);
@@ -22,8 +34,8 @@ if (isset($_POST['submit'])) {
     $file_size   = $_FILES['berkas']['size'];
     $file_error  = $_FILES['berkas']['error'];
 
-    // Validasi
-    if (empty($nip)) $error[] = "Guru harus dipilih";
+    // VALIDASI
+    if (empty($nip)) $error[] = "Guru tidak valid";
     if (empty($kode_mapel)) $error[] = "Mapel harus dipilih";
 
     $allowed_ext = ['pdf','doc','docx','xls','xlsx','ppt','pptx'];
@@ -37,25 +49,37 @@ if (isset($_POST['submit'])) {
         $error[] = "Format file tidak didukung";
     }
 
-    if ($file_size > 50000000) {
+    if ($file_size > 25000000) {
         $error[] = "Ukuran file maksimal 25MB";
     }
 
-    // Jika tidak ada error
+    // ==========================
+    // SIMPAN
+    // ==========================
     if (empty($error)) {
 
         $nama_baru = time() . "_" . preg_replace("/[^a-zA-Z0-9.]/", "_", $file_name);
-        $path = "../../assets/dokumen/" . $nama_baru;
 
-        if (move_uploaded_file($tmp_file, $path)) {
+        $folder_upload = __DIR__ . "/../../assets/dokumen/";
 
-            $sql = "INSERT INTO dokumen (nip, kode_mapel, jenis_file, nama_file, path_file)
-                    VALUES ('$nip','$kode_mapel','$jenis_file','$nama_baru','$path')";
+        if (!is_dir($folder_upload)) {
+            mkdir($folder_upload, 0777, true);
+        }
+
+        $path_server = $folder_upload . $nama_baru;
+        $path_db     = "assets/dokumen/" . $nama_baru;
+
+        if (move_uploaded_file($tmp_file, $path_server)) {
+
+            $sql = "INSERT INTO dokumen 
+                    (nip, kode_mapel, jenis_file, nama_file, path_file)
+                    VALUES 
+                    ('$nip','$kode_mapel','$jenis_file','$nama_baru','$path_db')";
 
             if (mysqli_query($conn, $sql)) {
                 $success = "Dokumen berhasil diupload";
             } else {
-                $error[] = "Gagal simpan database";
+                $error[] = "Gagal simpan database: " . mysqli_error($conn);
             }
 
         } else {
@@ -80,7 +104,7 @@ if (isset($_POST['submit'])) {
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger">
             <ul class="mb-0 ps-3">
-                <?php foreach($error as $e): ?>
+                <?php foreach ($error as $e): ?>
                     <li><?= $e ?></li>
                 <?php endforeach; ?>
             </ul>
@@ -101,26 +125,34 @@ if (isset($_POST['submit'])) {
 
                 <div class="row g-3">
 
+                    <!-- GURU (AUTO DARI LOGIN) -->
                     <div class="col-md-6">
                         <label class="form-label">Guru</label>
-                        <select name="nip" class="form-select" required>
-                            <option value="">Pilih Guru</option>
-                            <?php while ($g = mysqli_fetch_assoc($guru_query)): ?>
-                                <option value="<?= $g['nip'] ?>"><?= $g['nama_lengkap'] ?></option>
-                            <?php endwhile; ?>
-                        </select>
+
+                        <!-- tampilkan nama -->
+                        <input type="text" class="form-control" 
+                               value="<?= $guru_login['nama_lengkap'] ?? 'Tidak ditemukan' ?>" 
+                               readonly>
+
+                        <!-- kirim nip -->
+                        <input type="hidden" name="nip" 
+                               value="<?= $guru_login['nip'] ?? '' ?>">
                     </div>
 
+                    <!-- MAPEL -->
                     <div class="col-md-6">
                         <label class="form-label">Mata Pelajaran</label>
                         <select name="kode_mapel" class="form-select" required>
                             <option value="">Pilih Mapel</option>
                             <?php while ($m = mysqli_fetch_assoc($mapel_query)): ?>
-                                <option value="<?= $m['kode_mapel'] ?>"><?= $m['nama_mapel'] ?></option>
+                                <option value="<?= $m['kode_mapel'] ?>">
+                                    <?= $m['nama_mapel'] ?>
+                                </option>
                             <?php endwhile; ?>
                         </select>
                     </div>
 
+                    <!-- JENIS -->
                     <div class="col-md-6">
                         <label class="form-label">Jenis Dokumen</label>
                         <select name="jenis_file" class="form-select">
@@ -131,6 +163,7 @@ if (isset($_POST['submit'])) {
                         </select>
                     </div>
 
+                    <!-- FILE -->
                     <div class="col-md-6">
                         <label class="form-label">File</label>
                         <input type="file" name="berkas" class="form-control" required>
@@ -139,6 +172,7 @@ if (isset($_POST['submit'])) {
 
                 </div>
 
+                <!-- BUTTON -->
                 <div class="mt-4 d-flex justify-content-end gap-2">
                     <a href="index.php" class="btn btn-light border px-4">
                         Batal

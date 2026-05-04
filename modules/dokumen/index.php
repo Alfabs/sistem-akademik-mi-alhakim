@@ -89,7 +89,14 @@ include '../../includes/sidebar.php';
                     ?>
                     <tr>
                         <td><?= $no++ ?></td>
-                        <td><?= $row['nama_file'] ?></td>
+
+                        <td 
+                            style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                            title="<?= $row['nama_file'] ?>"
+                        >
+                            <?= $row['nama_file'] ?>
+                        </td>
+
                         <td>
                             <span class="badge bg-secondary"><?= $row['jenis_file'] ?></span>
                         </td>
