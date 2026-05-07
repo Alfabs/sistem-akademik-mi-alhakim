@@ -17,7 +17,34 @@ $query_kelas = mysqli_query($conn, "SELECT id_kelas, nama_kelas FROM kelas ORDER
 $query_mapel = mysqli_query($conn, "SELECT kode_mapel, nama_mapel FROM mapel ORDER BY nama_mapel");
 
 // Session guru
-$nip = $_SESSION['nip'] ?? '198001012010011001';
+$nip = null;
+
+if ($role === 'Guru') {
+
+    // cek session nip
+    if (!isset($_SESSION['nip']) || empty($_SESSION['nip'])) {
+
+        die("Session guru tidak valid.");
+    }
+
+    $nip_session = mysqli_real_escape_string($conn, $_SESSION['nip']);
+
+    // cek apakah nip ada di database
+    $cek_guru = mysqli_query($conn, "
+        SELECT nip
+        FROM guru
+        WHERE nip = '$nip_session'
+        LIMIT 1
+    ");
+
+    if (mysqli_num_rows($cek_guru) === 0) {
+
+        die("Data guru tidak ditemukan.");
+    }
+
+    // aman digunakan
+    $nip = $nip_session;
+}
 
 $pesan = isset($_GET['msg']) ? $_GET['msg'] : '';
 ?>
