@@ -185,10 +185,7 @@ include_once '../../includes/sidebar.php';
     </div>
 
     <div class="d-flex justify-content-between mt-3">
-        <div>
-            <a href="cetak_pdf.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>" class="btn btn-secondary btn-sm" target="_blank">Cetak PDF</a>
-            <a href="export_excel.php?id_ta=<?= $filter_ta ?>&id_kelas=<?= $filter_kelas ?>" class="btn btn-success btn-sm">Export Excel</a>
-        </div>
+
         <?php if ($is_operator): ?>
         <div>
             <a href="import_excel.php" class="btn btn-primary btn-sm">Import</a>
